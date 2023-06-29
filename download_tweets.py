@@ -1,6 +1,8 @@
 import json
 import requests
 
+from tinydb import TinyDB, Query
+
 from tweet_parser import TweetParser
 
 class TweetDownloader():
@@ -14,10 +16,9 @@ class TweetDownloader():
             self.header_cookie = config_data.get('HEADER_COOKIES')
             self.header_csrf = config_data.get('HEADER_CSRF')
             self.output_json_file_path = config_data.get('OUTPUT_JSON_FILE_PATH')
+            self.tdb = TinyDB(self.output_json_file_path)
 
     def retrieve_all_likes(self):
-        all_tweets = []
-
         likes_page = self.retrieve_likes_page()
         page_cursor = self.get_cursor(likes_page)
         old_page_cursor = None
@@ -26,16 +27,24 @@ class TweetDownloader():
         while likes_page and page_cursor and page_cursor != old_page_cursor:
             print(f"Fetching likes page: {current_page}...")
             current_page += 1
-            for raw_tweet in likes_page:
+            for i, raw_tweet in enumerate(likes_page):
+                # print(raw_tweet)
                 tweet_parser = TweetParser(raw_tweet)
                 if tweet_parser.is_valid_tweet:
-                    all_tweets.append(tweet_parser.tweet_as_json())
+                    jtweet = tweet_parser.tweet_as_json()
+                    print(f"Fetched[{i}]:{jtweet['tweet_created_at']} from {jtweet['user_handle']}")
+                    tweet = Query()
+                    tweet_existed = self.tdb.search(tweet.tweet_id == jtweet['tweet_id'])
+                    if tweet_existed:
+                        print('Reached saved tweet, exit')
+                        return
+                    else:
+                        jtid = self.tdb.insert(jtweet)
+                        # print(f"Saved:{jtid}")
+
             old_page_cursor = page_cursor
             likes_page = self.retrieve_likes_page(cursor=page_cursor)
             page_cursor = self.get_cursor(likes_page)
-
-        with open(self.output_json_file_path, 'w') as f:
-            f.write(json.dumps(all_tweets))
 
     def retrieve_likes_page(self, cursor=None):
         likes_url = 'https://api.twitter.com/graphql/QK8AVO3RpcnbLPKXLAiVog/Likes'

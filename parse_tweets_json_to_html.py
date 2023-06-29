@@ -25,7 +25,7 @@ class ParseTweetsJSONtoHTML():
                 output_html.write(tweet_html)
             output_html.write('</div></body></html>')
 
-    def create_tweet_html(self, tweet_data):
+    def create_tweet_html(self, tweet_data, write=True):
         output_html = '<div class="tweet_wrapper">'
 
         if self.download_images:
@@ -34,7 +34,7 @@ class ParseTweetsJSONtoHTML():
             self.save_remote_image(tweet_data["user_avatar_url"], full_path)
         else:
             user_image_src = tweet_data["user_avatar_url"]
-        
+
         output_html += '<div class="tweet_author_wrapper">'
         output_html += f"<div class='tweet_author_image'><img loading='lazy' src='{user_image_src}'></div>"
         output_html += "<div class='author_context'><div class='tweet_author_handle'>"
@@ -69,17 +69,17 @@ class ParseTweetsJSONtoHTML():
 
         output_html += "</div>\n\n"
 
-        
-        with open(individual_tweet_file_path, 'w') as individual_tweet_file:
-            individual_tweet_file.write('<html><head>')
-            individual_tweet_file.write('<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1.0, maximum-scale=1.0" />')
-            individual_tweet_file.write('<title>Liked Tweets Export</title>')
-            individual_tweet_file.write('<link rel="stylesheet" href="../styles.css"></head>')
-            individual_tweet_file.write('<body><div class="tweet_list">')
-            adjusted_html = output_html.replace("images/avatars", "../images/avatars")
-            adjusted_html = adjusted_html.replace("images/tweets", "../images/tweets")
-            individual_tweet_file.write(adjusted_html)
-            individual_tweet_file.write('</div></body></html>')
+        if write:
+            with open(individual_tweet_file_path, 'w') as individual_tweet_file:
+                individual_tweet_file.write('<html><head>')
+                individual_tweet_file.write('<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1.0, maximum-scale=1.0" />')
+                individual_tweet_file.write('<title>Liked Tweets Export</title>')
+                individual_tweet_file.write('<link rel="stylesheet" href="../styles.css"></head>')
+                individual_tweet_file.write('<body><div class="tweet_list">')
+                adjusted_html = output_html.replace("images/avatars", "../images/avatars")
+                adjusted_html = adjusted_html.replace("images/tweets", "../images/tweets")
+                individual_tweet_file.write(adjusted_html)
+                individual_tweet_file.write('</div></body></html>')
 
         return output_html
 
